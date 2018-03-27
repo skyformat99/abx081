@@ -28,7 +28,6 @@ void door_status_task(void const * argument)
  
  while(1)
  {
-  osDelay(DOOR_STATUS_TASK_INTERVAL);
   door_up_status=bsp_get_door_up_status();
   door_dwn_status=bsp_get_door_dwn_status();
   
@@ -56,5 +55,6 @@ void door_status_task(void const * argument)
       osSignalSet(glass_pwr_task_hdl,GLASS_PWR_TASK_DOOR_STATUS_CLOSE_SIGNAL);
     } 
   } 
+  osDelay(DOOR_STATUS_TASK_INTERVAL);
  }  
 }

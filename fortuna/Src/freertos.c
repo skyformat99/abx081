@@ -249,7 +249,7 @@ static void create_user_tasks()
   sys_led_task_hdl = osThreadCreate(osThread(sys_led_task), NULL); 
   APP_ASSERT(sys_led_task_hdl);
   
-  osThreadDef(lock_ctrl_task, lock_ctrl_task, osPriorityNormal, 0, 128);
+  osThreadDef(lock_ctrl_task, lock_ctrl_task, osPriorityNormal, 0, 256);
   lock_ctrl_task_hdl = osThreadCreate(osThread(lock_ctrl_task), NULL); 
   APP_ASSERT(lock_ctrl_task_hdl);
   

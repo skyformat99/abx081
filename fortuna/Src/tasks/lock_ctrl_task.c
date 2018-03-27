@@ -52,8 +52,9 @@ static void lock_ctrl_task_debug_unlock_lock();
 
 
 
-static uint8_t lock_type=LOCK_CTRL_TASK_LOCK_TYPE_MAN;
+static uint8_t lock_type=LOCK_CTRL_TASK_LOCK_TYPE_AUTO;
 static uint8_t lock_exception=LOCK_CTRL_TASK_LOCK_EXCEPTION_NONE;
+static uint8_t unlock_exception_cnt;
 
 /*获取锁的异常状态*/
 uint8_t lock_ctrl_task_get_lock_exception()
@@ -85,10 +86,11 @@ static void lock_timer_stop()
 static void lock_timer_expired(void const * argument)
 {
  APP_LOG_DEBUG("关锁定时器到达.\r\n");
- APP_LOG_DEBUG("向购物任务发送关锁失败信号.\r\n");
- osSignalSet(shopping_task_hdl,SHOPPING_TASK_LOCK_LOCK_FAIL_SIGNAL);  
- /*置为锁异常状态*/
- lock_exception=LOCK_CTRL_TASK_LOCK_EXCEPTION_HAPPEN;
+ APP_LOG_DEBUG("关锁失败.\r\n");
+ //APP_LOG_DEBUG("向购物任务发送关锁失败信号.\r\n");
+ //osSignalSet(shopping_task_hdl,SHOPPING_TASK_LOCK_LOCK_FAIL_SIGNAL);  
+ /*关锁不再需要置锁异常状态*/
+ //lock_exception=LOCK_CTRL_TASK_LOCK_EXCEPTION_HAPPEN;
 }
 
 static void auto_lock_timer_init()
@@ -140,12 +142,23 @@ static void unlock_timer_stop()
 static void unlock_timer_expired(void const * argument)
 {
  APP_LOG_DEBUG("开锁定时器到达.\r\n");
+ unlock_exception_cnt++;
+ APP_LOG_ERROR("开锁失败.lock_exception_cnt:%d\r\n",unlock_exception_cnt);
+ /*再次等待开锁*/
+ unlock_timer_start();
+ 
+ /*开锁失败次数超限*/
+ if(unlock_exception_cnt > LOCK_CTRL_TASK_UNLCOK_EXCEPTION_CNT_MAX)
+ {
  APP_LOG_DEBUG("向购物任务发送开锁失败信号.\r\n");
  osSignalSet(shopping_task_hdl,SHOPPING_TASK_UNLOCK_LOCK_FAIL_SIGNAL); 
+ 
+ unlock_exception_cnt=0;
  /*如果开锁失败就立刻把锁锁死*/
  lock_ctrl_task_lock_lock(); 
  /*置为锁异常状态*/
  lock_exception=LOCK_CTRL_TASK_LOCK_EXCEPTION_HAPPEN;
+ }
 }
 
 /*电磁锁吸住门*/
@@ -244,7 +257,7 @@ void lock_ctrl_task(void const * argument)
    }   
    if(sig.value.signals & LOCK_CTRL_TASK_LOCK_STATUS_LOCK_SIGNAL)
    {
-    APP_LOG_DEBUG("锁状态变化->上锁.\r\n");
+    APP_LOG_DEBUG("锁状态变化->关锁.\r\n");
     /*取消锁异常状态*/
     lock_exception=LOCK_CTRL_TASK_LOCK_EXCEPTION_NONE;
     lock_timer_stop();
@@ -260,7 +273,9 @@ void lock_ctrl_task(void const * argument)
    } 
    if(sig.value.signals & LOCK_CTRL_TASK_LOCK_STATUS_UNLOCK_SIGNAL)
    {
-    APP_LOG_DEBUG("锁状态变化->解锁.\r\n");
+    APP_LOG_DEBUG("锁状态变化->开锁.\r\n");
+    /*开锁异常次数清零*/
+    unlock_exception_cnt=0;
     /*取消锁异常状态*/
     lock_exception=LOCK_CTRL_TASK_LOCK_EXCEPTION_NONE;
     lock_type=LOCK_CTRL_TASK_LOCK_TYPE_AUTO;
@@ -268,6 +283,8 @@ void lock_ctrl_task(void const * argument)
     /*显示对应的灯光*/
     lock_ctrl_task_turn_on_unlock_led();
     lock_ctrl_task_unlock_door();
+    /*向购物任务发送开锁成功信号*/
+    osSignalSet(shopping_task_hdl,SHOPPING_TASK_UNLOCK_LOCK_SUCCESS_SIGNAL);
     
     auto_lock_timer_start();
    } 

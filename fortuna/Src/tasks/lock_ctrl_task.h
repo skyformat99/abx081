@@ -18,8 +18,8 @@ extern osThreadId lock_ctrl_task_hdl;
 #define  LOCK_CTRL_TASK_ALL_SIGNALS                    ((1<<8)-1)
 
 #define  LOCK_CTRL_TASK_WAIT_TIMEOUT                   osWaitForever
-#define  LOCK_CTRL_TASK_LOCK_TIMEOUT                   600
-#define  LOCK_CTRL_TASK_UNLOCK_TIMEOUT                 600
+#define  LOCK_CTRL_TASK_LOCK_TIMEOUT                   800
+#define  LOCK_CTRL_TASK_UNLOCK_TIMEOUT                 800
 #define  LOCK_CTRL_TASK_AUTO_LOCK_TIMEOUT              (10*1000)/*10秒钟无人开门自动上锁*/
 
 #define  LOCK_CTRL_TASK_LOCK_TYPE_AUTO                  1/*自动上锁*/
@@ -28,7 +28,7 @@ extern osThreadId lock_ctrl_task_hdl;
 #define  LOCK_CTRL_TASK_LOCK_EXCEPTION_NONE             3
 #define  LOCK_CTRL_TASK_LOCK_EXCEPTION_HAPPEN           4
 
-
+#define  LOCK_CTRL_TASK_UNLCOK_EXCEPTION_CNT_MAX        10
 
 /*获取锁的异常状态*/
 uint8_t lock_ctrl_task_get_lock_exception();
